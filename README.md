@@ -19,8 +19,10 @@ THP ffmpeg encoding comes from this code: https://github.com/jackoalan/avthp
  or ./CONVLINUX.sh /path_to_videos/ to convert a whole folder.
 
 
+
 The above scripts are just a convenient way to launch the 2 executables that reside in
-the bin folder. The conversion is done in 2 parts :
+the bin folder.
+The conversion is done in 2 parts :
 1) FFmpeg is forcing a framerate of 25 and adding a 6 pixels black border. The goal is to reduce final thp size.
 2) avthp encodes the video to thp, then extract audio and encode to a seperate vorbis .ogg file.
 
@@ -34,7 +36,7 @@ Here are the options :
 
 
 FFmpeg
--------
+------
 
 FPS : framerate. (default 25)
 
