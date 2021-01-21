@@ -1,0 +1,109 @@
+
+Linux
+======
+
+You need ffmpeg, libav and libvorbis libraries(and maybe other libraries) :
+
+sudo apt install ffmpeg
+sudo apt install libavutil-dev libswresample-dev libavcodec-dev libavformat-dev libswscale-dev
+sudo apt install libvorbis-dev
+
+mkdir build
+cd build
+cmake ..
+make
+
+
+
+Windows
+========
+
+The exe provided for Windows is a static build crosscompiled in Linux.
+
+First you need to install the crosscompiler and tools :
+
+sudo apt-get install g++-mingw-w64 mingw-w64-{tools,x86-64-dev}
+sudo apt-get install yasm nasm mercurial
+
+Then, you need to compile a static build of ffmpeg(which is a huge pain!).
+To do so, you must compile other external libs for encoding.
+
+
+Boring and dirty how to:
+
+=======================
+= ZLIB
+=======================
+wget http://www.zlib.net/zlib-1.2.11.tar.gz
+tar -xvzf zlib-1.2.11.tar.gz
+cd zlib-1.2.11/
+perl -i -pe 's,(PREFIX =)$,$1 x86_64-w64-mingw32-,' win32/Makefile.gcc
+make -f win32/Makefile.gcc
+sudo DESTDIR=/usr/x86_64-w64-mingw32/ INCLUDE_PATH=include  LIBRARY_PATH=lib  BINARY_PATH=bin make install -f win32/Makefile.gcc
+
+=======================
+= OGG/VORBIS
+=======================
+git clone --depth 1 https://gitlab.xiph.org/xiph/ogg.git
+cd ogg && ./autogen.sh
+./configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --prefix="/usr/x86_64-w64-mingw32" --enable-static --disable-shared
+
+
+git clone --depth 1 https://gitlab.xiph.org/xiph/vorbis.git
+cd vorbis && ./autogen.sh
+./configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --prefix="/usr/x86_64-w64-mingw32" --enable-static --disable-shared
+
+=======================
+= MP3
+=======================
+
+wget https://freefr.dl.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz
+tar -xvzf lame-3.100.tar.gz
+cd lame-3.100/
+./configure --target=x86_64-w64-mingw32 --host=x86_64-w64-mingw32 --prefix="/usr/x86_64-w64-mingw32" --enable-static --disable-shared
+make -j4
+sudo make install
+
+=======================
+= X264
+=======================
+
+git clone --depth 1 https://code.videolan.org/videolan/x264.git
+cd x264
+./configure --cross-prefix=x86_64-w64-mingw32- --host=x86_64-w64-mingw32 --prefix="/usr/x86_64-w64-mingw32" --enable-static
+
+=======================
+= X265
+=======================
+
+WARNING: This one is wrong! I've removed it from ffmpeg.exe in the end.
+
+git clone https://bitbucket.org/multicoreware/x265_git.git // Error download!!!
+https://bitbucket.org/multicoreware/x265_git/downloads/
+tar -xvzf x265_3.3.tar.gz
+cd x265_3.3/build/linux/
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX="/usr/x86_64-w64-mingw32" -DENABLE_SHARED=OFF -DCMAKE_EXE_LINKER_FLAGS="-static" ../../source -DCMAKE_TOOLCHAIN_FILE="toolchain-x86_64-w64-mingw32.cmake"
+make -j4
+sudo make install
+
+=======================
+= FFMPEG
+=======================
+
+wget -O ffmpeg-snapshot.tar.bz2 https://ffmpeg.org/releases/ffmpeg-snapshot.tar.bz2 
+tar xvf ffmpeg-snapshot.tar.bz2 && rm -f ffmpeg-snapshot.tar.bz2 && cd ffmpeg 
+
+export PKG_CONFIG_PATH=/usr/x86_64-w64-mingw32/lib/pkgconfig
+export PKG_CONFIG_LIBDIR=/usr/x86_64-w64-mingw32/lib/pkgconfig
+
+./configure --arch=x86_64 --target-os=mingw32 --cross-prefix=x86_64-w64-mingw32- --prefix=/usr/x86_64-w64-mingw32 --libdir=/usr/x86_64-w64-mingw32/lib --incdir=/usr/x86_64-w64-mingw32/include --pkg-config=pkg-config --pkg-config-flags=--static --extra-cflags=-static --extra-ldflags=-static --extra-libs="-lm -lz -fopenmp" --enable-small --enable-static --disable-shared --enable-nonfree --enable-gpl --enable-libmp3lame --enable-libvorbis --enable-libx264 --enable-zlib --enable-version3 --disable-ffplay --disable-avdevice --disable-doc --disable-network  --disable-debug --extra-cflags="-I--prefix=/usr/x86_64-w64-mingw32/include -static" --extra-ldflags="-L--prefix=/usr/x86_64-w64-mingw32/lib -static"
+
+
+DONE. Then you can compile avthp :
+
+mkdir build
+cd build
+cmake -D CMAKE_TOOLCHAIN_FILE=../Toolchain-x86_64-w64-mingw32.cmake ..
+make
+
+
